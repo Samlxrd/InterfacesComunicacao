@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
@@ -24,6 +25,8 @@ static inline void put_pixel(uint32_t pixel_grb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
 void set_led(bool *frame, uint8_t r, uint8_t g, uint8_t b);
 
+uint32_t last_time; // Variável auxiliar para controle do debounce
+
 int main()
 {
   setup();
@@ -43,10 +46,23 @@ int main()
   ssd1306_fill(&ssd, false);
   ssd1306_send_data(&ssd);
 
+  // Habilitando interrupção da gpio nos botões A e B.
+  gpio_set_irq_enabled_with_callback(A_BUTTON, GPIO_IRQ_EDGE_FALL, 1, & gpio_irq_handler);
+  gpio_set_irq_enabled(B_BUTTON, GPIO_IRQ_EDGE_FALL, true);
+
   bool cor = true;
+  
   while (true)
   {
-    sleep_ms(1000);
+    if (stdio_usb_connected())
+        { // Certifica-se de que o USB está conectado
+            char c;
+            if (scanf("%c", &c) == 1)
+            { // Lê caractere da entrada padrão
+                printf("Recebido: '%c'\n", c);
+            }
+        }
+        sleep_ms(40);
   }
 }
 
@@ -109,4 +125,23 @@ void set_led(bool *frame, uint8_t r, uint8_t g, uint8_t b)
 }
 
 // Rotina da Interrupção
-static void gpio_irq_handler(uint gpio, uint32_t events){};
+static void gpio_irq_handler(uint gpio, uint32_t events){
+  uint32_t current_time = to_us_since_boot(get_absolute_time());
+  if (current_time - last_time > 200000) // Delay de 200ms para debounce
+  {
+    last_time = current_time;
+
+    switch (gpio)
+    {
+    case A_BUTTON:
+      gpio_put(LED_GREEN, !gpio_get(LED_GREEN)); // Alterna estado do led verde
+      break;
+    case B_BUTTON:
+      gpio_put(LED_BLUE, !gpio_get(LED_BLUE)); // Alterna estado do led blue
+      break;
+
+    default:
+      break;
+    }
+  }
+}
