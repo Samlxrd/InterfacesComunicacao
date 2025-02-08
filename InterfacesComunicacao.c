@@ -25,6 +25,11 @@ static inline void put_pixel(uint32_t pixel_grb);
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
 void set_led(bool *frame, uint8_t r, uint8_t g, uint8_t b);
 
+// Variável global para armazenar a cor para matrix de led 5x5 (Entre 0 e 255 para intensidade)
+uint8_t red_value = 10; // Intensidade do vermelho
+uint8_t green_value = 0; // Intensidade do verde
+uint8_t blue_value = 0; // Intensidade do azul
+
 uint32_t last_time; // Variável auxiliar para controle do debounce
 
 int main()
@@ -57,9 +62,16 @@ int main()
     if (stdio_usb_connected())
         { // Certifica-se de que o USB está conectado
             char c;
+            int num;
             if (scanf("%c", &c) == 1)
             { // Lê caractere da entrada padrão
-                printf("Recebido: '%c'\n", c);
+                printf("Recebido: '%c'", c);
+
+                // Intervalo para 0-9 em ascii
+                if (c > 47 && c < 58) {
+                  num = c - 48; // C = Valor caractere lido em ASCII, 48 = Número 0 em ascii (o primeiro numero da sequencia)
+                  set_led(numeros[c-48], red_value, green_value, blue_value); 
+                }
             }
         }
         sleep_ms(40);
@@ -129,15 +141,20 @@ static void gpio_irq_handler(uint gpio, uint32_t events){
   uint32_t current_time = to_us_since_boot(get_absolute_time());
   if (current_time - last_time > 200000) // Delay de 200ms para debounce
   {
+    char *estado;
     last_time = current_time;
 
     switch (gpio)
     {
     case A_BUTTON:
       gpio_put(LED_GREEN, !gpio_get(LED_GREEN)); // Alterna estado do led verde
+      estado = (gpio_get(LED_GREEN) ? "Ligado" : "Desligado");
+      printf("Estado do LED Verde alterado para: %s.\n", estado);
       break;
     case B_BUTTON:
       gpio_put(LED_BLUE, !gpio_get(LED_BLUE)); // Alterna estado do led blue
+      estado = (gpio_get(LED_BLUE) ? "Ligado" : "Desligado");
+      printf("Estado do LED Azul alterado para: %s.\n", estado);
       break;
 
     default:
