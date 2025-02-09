@@ -150,6 +150,7 @@ static void gpio_irq_handler(uint gpio, uint32_t events)
 
       // Exibindo mensagem informativa sobre o estado do LED no Display SSD1306 e no Serial Monitor
       printf("Estado do LED Verde alterado para: %s.\n", estado);
+      ssd1306_fill(&ssd, !cor); // Limpa o display
       ssd1306_draw_string(&ssd, "LED Verde ", 8, 10);
       ssd1306_draw_string(&ssd, estado, 8, 30);
       ssd1306_send_data(&ssd);
@@ -160,6 +161,7 @@ static void gpio_irq_handler(uint gpio, uint32_t events)
 
       // Exibindo mensagem informativa sobre o estado do LED no Display SSD1306 e no Serial Monitor
       printf("Estado do LED Azul alterado para: %s.\n", estado);
+      ssd1306_fill(&ssd, !cor); // Limpa o display
       ssd1306_draw_string(&ssd, "LED Azul ", 8, 10);
       ssd1306_draw_string(&ssd, estado, 8, 30);
       ssd1306_send_data(&ssd);
